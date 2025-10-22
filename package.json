@@ -1,6 +1,6 @@
 {
-  "name": "coverlens",
-  "displayName": "CoverLens",
+  "name": "codelens",
+  "displayName": "CodeLens",
   "description": "Generate and display code coverage reports for .NET projects with assembly analysis",
   "version": "0.1.0",
   "icon": "icon.png",
@@ -17,22 +17,22 @@
       {
         "command": "dotnet-coverage.generateReport",
         "title": "Generate Code Coverage Report",
-        "category": "CoverLens"
+        "category": "CodeLens"
       },
       {
         "command": "dotnet-coverage.showReport",
         "title": "Show Code Coverage Report",
-        "category": "CoverLens"
+        "category": "CodeLens"
       },
       {
         "command": "dotnet-coverage.runTests",
         "title": "Run Tests with Coverage",
-        "category": "CoverLens"
+        "category": "CodeLens"
       },
       {
         "command": "dotnet-coverage.viewAssemblyInfo",
         "title": "View Assembly Information",
-        "category": "CoverLens"
+        "category": "CodeLens"
       }
     ],
     "menus": {
