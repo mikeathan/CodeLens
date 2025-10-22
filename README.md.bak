@@ -1,0 +1,105 @@
+# code-cover README
+
+This is the README for your extension "code-cover". After writing up a brief description, we recommend including the following sections.
+
+## Features
+
+Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+
+# DotNet Coverage Reporter
+
+A VS Code extension for generating and displaying code coverage reports for .NET projects.
+
+## Features
+
+- **Generate Coverage Reports**: Run `dotnet test` with code coverage collection
+- **View HTML Reports**: Display coverage reports directly in VS Code
+- **Multiple Test Frameworks**: Supports xUnit, NUnit, MSTest
+- **Easy Access**: Commands available in Command Palette and context menus
+
+## Commands
+
+- `DotNet Coverage: Generate Code Coverage Report` - Runs tests with coverage and generates an HTML report
+- `DotNet Coverage: Show Code Coverage Report` - Opens the generated coverage report in VS Code
+- `DotNet Coverage: Run Tests with Coverage` - Runs tests with coverage collection only
+
+## Requirements
+
+- .NET SDK installed and available in PATH
+- A .NET project with test projects
+- Test projects must reference:
+  - `Microsoft.NET.Test.Sdk`
+  - A test framework (xUnit, NUnit, or MSTest)
+  - `coverlet.collector` package for coverage collection
+
+## Installation
+
+1. Install the extension from the VS Code Marketplace
+2. Open a .NET solution or project folder
+3. Right-click on a `.csproj` or `.sln` file, or use Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+
+## Usage
+
+### Generate Coverage Report
+
+1. Open Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`)
+2. Type "DotNet Coverage: Generate Code Coverage Report"
+3. Wait for tests to complete
+4. The extension will automatically install `dotnet-reportgenerator-globaltool` if needed
+5. View the generated HTML report
+
+### Alternative: Context Menu
+
+Right-click on any `.csproj` or `.sln` file in the Explorer and select "Generate Code Coverage Report"
+
+## Extension Settings
+
+This extension currently does not require any configuration settings.
+
+## Coverage Report Location
+
+Coverage reports are generated in the `coverage/report` directory within your workspace.
+
+## Troubleshooting
+
+### .NET CLI not found
+
+Ensure .NET SDK is installed and available in your PATH:
+
+```bash
+dotnet --version
+```
+
+### No coverage generated
+
+Make sure your test projects include the `coverlet.collector` package:
+
+```xml
+<PackageReference Include="coverlet.collector" Version="6.0.0" />
+```
+
+### ReportGenerator not found
+
+The extension will automatically install `dotnet-reportgenerator-globaltool` on first use.
+
+## Known Issues
+
+- Coverage reports may take some time to generate for large projects
+- The webview may not load all stylesheets correctly in some cases
+
+## Release Notes
+
+### 0.0.1
+
+Initial release:
+- Generate code coverage reports
+- Display HTML reports in VS Code
+- Support for multiple test frameworks
+
+## Contributing
+
+Found a bug or have a feature request? Please open an issue.
+
+## License
+
+This extension is licensed under the MIT License.
