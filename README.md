@@ -33,8 +33,6 @@ A VS Code extension for generating and displaying code coverage reports for .NET
 5. Explore the interactive dependency graph
 6. Click on nodes to open package pages on npmjs.com
 
-![Extension Screenshot](images/extension.png)
-
 ## Project Architecture
 
 The extension has been refactored into a modular architecture for better maintainability and readability:
