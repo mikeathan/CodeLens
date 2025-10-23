@@ -5,12 +5,14 @@ import {
   CoverageWebviewProvider,
   AssemblyWebviewProvider,
 } from "./providers/webviewProvider";
+import { NpmDepsGraphView } from "./views/npmDepsGraphView";
 
 let outputChannel: vscode.OutputChannel;
 let coverageService: CoverageService;
 let assemblyService: AssemblyService;
 let coverageWebviewProvider: CoverageWebviewProvider;
 let assemblyWebviewProvider: AssemblyWebviewProvider;
+let npmDepsGraphView: NpmDepsGraphView;
 
 export function activate(context: vscode.ExtensionContext) {
   outputChannel = vscode.window.createOutputChannel("CodeLens");
@@ -20,6 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
   assemblyService = new AssemblyService(outputChannel);
   coverageWebviewProvider = new CoverageWebviewProvider(context);
   assemblyWebviewProvider = new AssemblyWebviewProvider(context);
+  npmDepsGraphView = new NpmDepsGraphView(context);
 
   console.log("CodeLens is now active!");
 
@@ -63,12 +66,27 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  // Command: Show NPM Dependency Graph
+  const showNpmDepsGraph = vscode.commands.registerCommand(
+    "codelens.showNpmDepsGraph",
+    async () => {
+      try {
+        await npmDepsGraphView.show();
+      } catch (error) {
+        vscode.window.showErrorMessage(
+          `Failed to show npm dependency graph: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    }
+  );
+
   context.subscriptions.push(
     generateCoverage,
     showCoverage,
     runTestsWithCoverage,
     viewAssemblyInfo,
     showAssemblyInfo,
+    showNpmDepsGraph,
     outputChannel
   );
 }
@@ -82,5 +100,8 @@ export function deactivate() {
   }
   if (assemblyWebviewProvider) {
     assemblyWebviewProvider.dispose();
+  }
+  if (npmDepsGraphView) {
+    npmDepsGraphView.dispose();
   }
 }
