@@ -49,16 +49,74 @@ export class CoverageWebviewProvider {
 
       const htmlContent = fs.readFileSync(reportPath, "utf8");
       const reportDir = path.dirname(reportPath);
+      const normalizedReportDir = path.resolve(reportDir);
 
       // Convert local file paths to webview URIs
       const webviewHtml = htmlContent.replace(
-        /(src|href)="(?!http)([^"]+)"/g,
-        (match: string, attr: string, filePath: string) => {
-          const fullPath = path.join(reportDir, filePath);
-          const webviewUri = this.panel!.webview.asWebviewUri(
-            vscode.Uri.file(fullPath)
+        /(src|href)="(?!https?:)([^"]+)"/gi,
+        (match: string, attr: string, resourcePath: string) => {
+          // Skip data, mailto, protocol-relative, and already transformed URIs
+          if (
+            /^(data:|mailto:|vscode-resource:|blob:)/i.test(resourcePath) ||
+            resourcePath.startsWith("//")
+          ) {
+            return match;
+          }
+
+          let pathPart = resourcePath;
+          let queryPart: string | undefined;
+          let fragmentPart: string | undefined;
+
+          const hashIndex = pathPart.indexOf("#");
+          if (hashIndex !== -1) {
+            fragmentPart = pathPart.slice(hashIndex + 1);
+            pathPart = pathPart.slice(0, hashIndex);
+          }
+
+          const queryIndex = pathPart.indexOf("?");
+          if (queryIndex !== -1) {
+            queryPart = pathPart.slice(queryIndex + 1);
+            pathPart = pathPart.slice(0, queryIndex);
+          }
+
+          if (!pathPart.trim()) {
+            return match;
+          }
+
+          const resolvedPath = path.resolve(reportDir, pathPart);
+          const relativeToReport = path.relative(
+            normalizedReportDir,
+            resolvedPath
           );
-          return `${attr}="${webviewUri}"`;
+
+          if (
+            relativeToReport.startsWith("..") ||
+            path.isAbsolute(relativeToReport)
+          ) {
+            return match;
+          }
+
+          if (!fs.existsSync(resolvedPath)) {
+            return match;
+          }
+
+          const stat = fs.statSync(resolvedPath);
+          if (!stat.isFile()) {
+            return match;
+          }
+
+          let webviewUri = this.panel!.webview.asWebviewUri(
+            vscode.Uri.file(resolvedPath)
+          );
+
+          if (queryPart || fragmentPart) {
+            webviewUri = webviewUri.with({
+              query: queryPart || undefined,
+              fragment: fragmentPart || undefined,
+            });
+          }
+
+          return `${attr}="${webviewUri.toString()}"`;
         }
       );
 

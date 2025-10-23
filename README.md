@@ -28,10 +28,10 @@ A VS Code extension for generating and displaying code coverage reports for .NET
 
 1. Open Command Palette (Cmd+Shift+P)
 2. Run "CodeLens: Show NPM Dependency Graph"
-3. Enter package names (comma-separated) or use workspace dependencies
-4. Choose whether to include devDependencies
-5. Explore the interactive dependency graph
-6. Click on nodes to open package pages on npmjs.com
+3. Use the sidebar filters to include or exclude dependency types
+4. Select individual packages or press **Select All** to graph everything
+5. Click **Update Graph** to rebuild the visualization with your selection
+6. Explore the interactive dependency graph and click nodes to open the package page on npmjs.com
 
 ## Project Architecture
 
@@ -180,4 +180,3 @@ code --install-extension codelens-<version>.vsix
 ## License
 
 MIT
-
