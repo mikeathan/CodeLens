@@ -1,8 +1,8 @@
 {
   "name": "codelens",
   "displayName": "CodeLens",
-  "description": "Generate and display code coverage reports for .NET projects with assembly analysis",
-  "version": "0.1.0",
+  "description": "Generate and display code coverage reports for .NET projects with assembly analysis and npm dependency graph visualization",
+  "version": "0.1.1",
   "icon": "icon.png",
   "engines": {
     "vscode": "^1.105.0"
@@ -10,7 +10,9 @@
   "categories": [
     "Testing"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:codelens.showNpmDepsGraph"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -32,6 +34,11 @@
       {
         "command": "dotnet-coverage.viewAssemblyInfo",
         "title": "View Assembly Information",
+        "category": "CodeLens"
+      },
+      {
+        "command": "codelens.showNpmDepsGraph",
+        "title": "Show NPM Dependency Graph",
         "category": "CodeLens"
       }
     ],
@@ -63,6 +70,10 @@
         },
         {
           "command": "dotnet-coverage.viewAssemblyInfo",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "codelens.showNpmDepsGraph",
           "when": "workspaceFolderCount > 0"
         }
       ]
