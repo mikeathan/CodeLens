@@ -1,12 +1,13 @@
 # CodeLens
 
-A VS Code extension for generating and displaying code coverage reports for .NET projects with assembly analysis capabilities.
+A VS Code extension for generating and displaying code coverage reports for .NET projects with assembly analysis capabilities and npm dependency graph visualization.
 
 ## Features
 
 - Generate coverage reports from dotnet test
 - Display HTML reports in VS Code webviews
 - Analyze .NET assemblies (DLLs/EXEs) with detailed information
+- Visualize npm package dependency graphs with interactive exploration
 - Support for xUnit, NUnit, and MSTest frameworks
 
 ## Usage
@@ -22,6 +23,17 @@ A VS Code extension for generating and displaying code coverage reports for .NET
 1. Right-click any .dll or .exe file
 2. Select "View Assembly Information"
 3. Explore assembly metadata in an interactive webview
+
+### NPM Dependency Graph
+
+1. Open Command Palette (Cmd+Shift+P)
+2. Run "CodeLens: Show NPM Dependency Graph"
+3. Enter package names (comma-separated) or use workspace dependencies
+4. Choose whether to include devDependencies
+5. Explore the interactive dependency graph
+6. Click on nodes to open package pages on npmjs.com
+
+![Extension Screenshot](images/extension.png)
 
 ## Project Architecture
 
