@@ -1,11 +1,13 @@
 # 🚨 COMPLETE REINSTALLATION GUIDE 🚨
 
 ## The Problem
+
 VS Code aggressively caches extensions. Simply installing a new version doesn't always reload the code properly.
 
 ## The Solution: Nuclear Reinstall
 
 ### **Step 1: Close VS Code Completely**
+
 ```bash
 # Make sure NO VS Code windows are open
 # On Mac: Cmd+Q
@@ -13,24 +15,28 @@ VS Code aggressively caches extensions. Simply installing a new version doesn't 
 ```
 
 ### **Step 2: Clear Extension Cache (Optional but Recommended)**
+
 ```bash
 cd /home/mikeathan/dev/CodeLens
 ./clear-cache.sh
 ```
 
 ### **Step 3: Force Reinstall**
+
 ```bash
 cd /home/mikeathan/dev/CodeLens
 ./force-reinstall.sh
 ```
 
 This will:
+
 - ✓ Clean build the extension
 - ✓ Package version 0.1.3
 - ✓ Uninstall all old versions
 - ✓ Install the new version
 
 ### **Step 4: START VS Code (Fresh Start)**
+
 ```bash
 code .
 ```
@@ -48,6 +54,7 @@ code .
 2. Run: `CodeLens: Show NPM Dependency Graph`
 
 **You should see:**
+
 - ✅ **Package selection UI appears first**
 - ✅ **NO automatic graph generation**
 - ✅ **"Update Graph" button visible**
@@ -57,6 +64,7 @@ code .
 4. Click "Update Graph"
 
 **During generation you should see:**
+
 - ✅ **"Stop" button appears**
 - ✅ **"Update Graph" and "Refresh Data" buttons are disabled**
 - ✅ **Status message shows progress**
@@ -64,6 +72,7 @@ code .
 5. Click "Stop" to test cancellation
 
 **After stopping:**
+
 - ✅ **"Stop" button disappears**
 - ✅ **Other buttons become enabled again**
 - ✅ **Message confirms operation was stopped**
@@ -75,9 +84,11 @@ code .
 ### Last Resort Options:
 
 #### Option A: Development Host Testing
+
 Instead of installing the extension, run it in development mode:
 
 1. Open VS Code in the project:
+
    ```bash
    cd /home/mikeathan/dev/CodeLens
    code .
@@ -88,6 +99,7 @@ Instead of installing the extension, run it in development mode:
 4. This uses the source code directly, bypassing any cache issues
 
 #### Option B: Check What's Actually Installed
+
 ```bash
 # List all installed extensions
 code --list-extensions --show-versions | grep -i codelens
@@ -100,6 +112,7 @@ code --uninstall-extension codelens
 ```
 
 #### Option C: Manual Extension Folder Inspection
+
 ```bash
 # Find where extensions are installed
 ls -la ~/.vscode/extensions/ | grep -i codelens
