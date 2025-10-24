@@ -1,4 +1,5 @@
 import * as https from "https";
+import * as vscode from "vscode";
 
 export interface GraphNode {
   id: string;
@@ -33,33 +34,48 @@ export class NpmDependenciesService {
    * @param packageNames Array of package names to analyze
    * @param maxDepth Maximum depth to traverse (default: 3)
    * @param maxNodes Maximum number of nodes to include (default: 100)
+   * @param cancellationToken Optional cancellation token
    * @returns GraphData object containing nodes and edges
    */
   async buildGraph(
     packageNames: string[],
     maxDepth: number = 3,
-    maxNodes: number = 100
+    maxNodes: number = 100,
+    cancellationToken?: vscode.CancellationToken
   ): Promise<GraphData> {
+    console.log(`Building graph for packages: ${packageNames.join(", ")}`);
+    console.log(`Max depth: ${maxDepth}, Max nodes: ${maxNodes}`);
+    
     const nodes: GraphNode[] = [];
     const edges: GraphEdge[] = [];
     this.visitedNodes = new Set();
     this.cycleDetected = new Set();
 
     for (const packageName of packageNames) {
+      if (cancellationToken?.isCancellationRequested) {
+        console.log("Cancellation requested, stopping graph build");
+        break;
+      }
+
+      console.log(`Processing package: ${packageName}`);
+      
       await this.traverseDependencies(
         packageName.trim(),
         0,
         maxDepth,
         maxNodes,
         nodes,
-        edges
+        edges,
+        cancellationToken
       );
       
       if (nodes.length >= maxNodes) {
+        console.log(`Reached max nodes limit: ${maxNodes}`);
         break;
       }
     }
 
+    console.log(`Graph built: ${nodes.length} nodes, ${edges.length} edges`);
     return { nodes, edges };
   }
 
@@ -72,34 +88,41 @@ export class NpmDependenciesService {
     maxDepth: number,
     maxNodes: number,
     nodes: GraphNode[],
-    edges: GraphEdge[]
+    edges: GraphEdge[],
+    cancellationToken?: vscode.CancellationToken
   ): Promise<void> {
     if (currentDepth > maxDepth || nodes.length >= maxNodes) {
       return;
     }
 
-    // Check for cycles
-    if (this.visitedNodes.has(packageName)) {
-      this.cycleDetected.add(packageName);
+    if (cancellationToken?.isCancellationRequested) {
       return;
     }
 
-    this.visitedNodes.add(packageName);
+    // Check for cycles using a Set of nodeIds to handle different versions
+    const nodeId = `${packageName}`;
+    if (this.visitedNodes.has(nodeId)) {
+      this.cycleDetected.add(nodeId);
+      return;
+    }
+
+    this.visitedNodes.add(nodeId);
 
     try {
       const packageInfo = await this.fetchPackageInfo(packageName);
       
       if (!packageInfo) {
+        this.visitedNodes.delete(nodeId);
         return;
       }
 
       const version = packageInfo["dist-tags"]?.latest || "unknown";
-      const nodeId = `${packageName}@${version}`;
+      const fullNodeId = `${packageName}@${version}`;
 
       // Add node if not already present
-      if (!nodes.find(n => n.id === nodeId)) {
+      if (!nodes.find(n => n.id === fullNodeId)) {
         nodes.push({
-          id: nodeId,
+          id: fullNodeId,
           label: packageName,
           version: version,
           level: currentDepth
@@ -110,21 +133,24 @@ export class NpmDependenciesService {
       const versionData = packageInfo.versions?.[version];
       const dependencies = versionData?.dependencies || {};
 
+      // Limit number of dependencies processed at each level to prevent explosion
+      const depEntries = Object.entries(dependencies).slice(0, 10);
+
       // Process dependencies
-      for (const [depName, depVersion] of Object.entries(dependencies)) {
-        if (nodes.length >= maxNodes) {
+      for (const [depName] of depEntries) {
+        if (nodes.length >= maxNodes || cancellationToken?.isCancellationRequested) {
           break;
         }
 
         const depInfo = await this.fetchPackageInfo(depName);
         if (depInfo) {
           const depLatestVersion = depInfo["dist-tags"]?.latest || "unknown";
-          const depNodeId = `${depName}@${depLatestVersion}`;
+          const depFullNodeId = `${depName}@${depLatestVersion}`;
 
           // Add dependency node if not present
-          if (!nodes.find(n => n.id === depNodeId)) {
+          if (!nodes.find(n => n.id === depFullNodeId)) {
             nodes.push({
-              id: depNodeId,
+              id: depFullNodeId,
               label: depName,
               version: depLatestVersion,
               level: currentDepth + 1
@@ -132,27 +158,32 @@ export class NpmDependenciesService {
           }
 
           // Add edge
-          edges.push({
-            from: nodeId,
-            to: depNodeId
-          });
+          if (!edges.find(e => e.from === fullNodeId && e.to === depFullNodeId)) {
+            edges.push({
+              from: fullNodeId,
+              to: depFullNodeId
+            });
+          }
 
-          // Recursively traverse
-          await this.traverseDependencies(
-            depName,
-            currentDepth + 1,
-            maxDepth,
-            maxNodes,
-            nodes,
-            edges
-          );
+          // Recursively traverse only if not too deep
+          if (currentDepth < maxDepth - 1) {
+            await this.traverseDependencies(
+              depName,
+              currentDepth + 1,
+              maxDepth,
+              maxNodes,
+              nodes,
+              edges,
+              cancellationToken
+            );
+          }
         }
       }
     } catch (error) {
       console.error(`Error traversing ${packageName}:`, error);
     }
 
-    this.visitedNodes.delete(packageName);
+    this.visitedNodes.delete(nodeId);
   }
 
   /**
