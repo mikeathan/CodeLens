@@ -35,6 +35,7 @@ export class NpmDepsGraphView {
   private currentSelection: string[] = [];
   private lastGraphData: GraphData = { nodes: [], edges: [] };
   private webviewReady = false;
+  private currentCancellation: vscode.CancellationTokenSource | undefined;
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -72,11 +73,7 @@ export class NpmDepsGraphView {
         this.panel.reveal(vscode.ViewColumn.One);
       }
 
-      await this.updateGraphForSelection(this.currentSelection, {
-        title: "Building npm dependency graph...",
-        clearCache: false,
-      });
-
+      // Don't auto-generate graph on open - let user select packages and click "Update Graph"
       await this.sendInitMessage();
     } catch (error) {
       const details = error instanceof Error ? error.message : String(error);
@@ -130,6 +127,10 @@ export class NpmDepsGraphView {
    * Create the webview panel
    */
   private createPanel(): void {
+    const iconPath = vscode.Uri.file(
+      path.join(this.context.extensionPath, "icon.png")
+    );
+
     this.panel = vscode.window.createWebviewPanel(
       "npmDepsGraph",
       "NPM Dependency Graph",
@@ -139,6 +140,9 @@ export class NpmDepsGraphView {
         retainContextWhenHidden: true,
       }
     );
+
+    // Set the icon for the panel
+    this.panel.iconPath = iconPath;
 
     this.webviewReady = false;
 
@@ -159,6 +163,9 @@ export class NpmDepsGraphView {
             break;
           case "refresh":
             await this.handleRefreshRequest(message.packageNames ?? []);
+            break;
+          case "stop":
+            this.handleStopRequest();
             break;
           case "openPackage":
             await this.openPackageInBrowser(message.packageName);
@@ -194,6 +201,22 @@ export class NpmDepsGraphView {
   }
 
   /**
+   * Handle stop request
+   */
+  private handleStopRequest(): void {
+    if (this.currentCancellation) {
+      this.currentCancellation.cancel();
+      this.currentCancellation.dispose();
+      this.currentCancellation = undefined;
+
+      this.postMessageIfReady({
+        command: "operationStopped",
+        message: "Graph generation stopped by user.",
+      });
+    }
+  }
+
+  /**
    * Normalize package name list
    */
   private normalizePackageNames(names: unknown): string[] {
@@ -223,6 +246,12 @@ export class NpmDepsGraphView {
 
     this.currentSelection = packageNames;
 
+    // Cancel any ongoing operation
+    if (this.currentCancellation) {
+      this.currentCancellation.cancel();
+      this.currentCancellation.dispose();
+    }
+
     if (options.clearCache) {
       this.npmService.clearCache();
     }
@@ -234,17 +263,36 @@ export class NpmDepsGraphView {
         graphData: this.lastGraphData,
         selection: this.currentSelection,
       });
+      await this.postMessageIfReady({
+        command: "operationComplete",
+      });
       return;
     }
 
     try {
+      // Create new cancellation token
+      this.currentCancellation = new vscode.CancellationTokenSource();
+      const token = this.currentCancellation.token;
+
+      // Notify UI that operation started
+      await this.postMessageIfReady({
+        command: "operationStarted",
+      });
+
       const graphData = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
           title: options.title,
-          cancellable: false,
+          cancellable: true,
         },
-        async () => {
+        async (progress, cancellationToken) => {
+          // Link VS Code's cancellation token to our internal one
+          cancellationToken.onCancellationRequested(() => {
+            if (this.currentCancellation) {
+              this.currentCancellation.cancel();
+            }
+          });
+
           return await this.npmService.buildGraph(
             this.currentSelection,
             DEFAULT_MAX_DEPTH,
@@ -253,12 +301,25 @@ export class NpmDepsGraphView {
         }
       );
 
+      // Check if cancelled before updating
+      if (token.isCancellationRequested) {
+        await this.postMessageIfReady({
+          command: "operationStopped",
+          message: "Graph generation was cancelled.",
+        });
+        return;
+      }
+
       this.lastGraphData = graphData;
 
       await this.postMessageIfReady({
         command: "updateGraph",
         graphData: this.lastGraphData,
         selection: this.currentSelection,
+      });
+
+      await this.postMessageIfReady({
+        command: "operationComplete",
       });
     } catch (error) {
       const details = error instanceof Error ? error.message : String(error);
@@ -269,6 +330,14 @@ export class NpmDepsGraphView {
         command: "showError",
         message: details,
       });
+      await this.postMessageIfReady({
+        command: "operationComplete",
+      });
+    } finally {
+      if (this.currentCancellation) {
+        this.currentCancellation.dispose();
+        this.currentCancellation = undefined;
+      }
     }
   }
 
@@ -656,6 +725,7 @@ export class NpmDepsGraphView {
     <main id="graphContainer">
       <div id="graphControls">
         <button id="updateGraphBtn" type="button">Update Graph</button>
+        <button id="stopGraphBtn" type="button" class="secondary" style="display: none;">Stop</button>
         <button id="refreshGraphBtn" type="button" class="secondary">Refresh Data</button>
         <button id="fitGraphBtn" type="button" class="secondary">Fit to Screen</button>
       </div>
@@ -691,6 +761,7 @@ export class NpmDepsGraphView {
     const selectAllBtn = document.getElementById("selectAllBtn");
     const clearSelectionBtn = document.getElementById("clearSelectionBtn");
     const updateGraphBtn = document.getElementById("updateGraphBtn");
+    const stopGraphBtn = document.getElementById("stopGraphBtn");
     const refreshGraphBtn = document.getElementById("refreshGraphBtn");
     const fitGraphBtn = document.getElementById("fitGraphBtn");
     const projectTitle = document.getElementById("projectTitle");
@@ -714,7 +785,7 @@ export class NpmDepsGraphView {
           renderPackageList();
           renderSelectionSummary();
           renderGraph(message.graphData || { nodes: [], edges: [] });
-          statusMessage.textContent = "";
+          statusMessage.textContent = "Select packages and click 'Update Graph' to visualize dependencies.";
           break;
         }
         case "updateGraph":
@@ -724,10 +795,31 @@ export class NpmDepsGraphView {
             updateCheckboxStates();
           }
           renderGraph(message.graphData || { nodes: [], edges: [] });
+          statusMessage.textContent = "";
+          break;
+        case "operationStarted":
+          updateGraphBtn.disabled = true;
+          refreshGraphBtn.disabled = true;
+          stopGraphBtn.style.display = "inline-block";
+          statusMessage.textContent = "Building graph... Click Stop to cancel.";
+          break;
+        case "operationComplete":
+          updateGraphBtn.disabled = false;
+          refreshGraphBtn.disabled = false;
+          stopGraphBtn.style.display = "none";
+          break;
+        case "operationStopped":
+          updateGraphBtn.disabled = false;
+          refreshGraphBtn.disabled = false;
+          stopGraphBtn.style.display = "none";
+          statusMessage.textContent = message.message || "Operation stopped.";
           break;
         case "showError":
           statusMessage.textContent =
             typeof message.message === "string" ? message.message : "An unexpected error occurred.";
+          updateGraphBtn.disabled = false;
+          refreshGraphBtn.disabled = false;
+          stopGraphBtn.style.display = "none";
           break;
       }
     });
@@ -865,6 +957,7 @@ export class NpmDepsGraphView {
     function renderGraph(graphData) {
       const container = document.getElementById("network");
 
+      // Initialize network if needed
       if (!nodes || !edges) {
         nodes = new vis.DataSet();
         edges = new vis.DataSet();
@@ -921,6 +1014,7 @@ export class NpmDepsGraphView {
         });
       }
 
+      // CRITICAL: Clear existing nodes and edges before adding new ones
       nodes.clear();
       edges.clear();
 
@@ -929,13 +1023,14 @@ export class NpmDepsGraphView {
 
       if (graphNodes.length === 0) {
         statusMessage.textContent =
-          "No graph data available. Select one or more packages and choose Update Graph.";
+          statusMessage.textContent || "No graph data available. Select one or more packages and click 'Update Graph' to visualize dependencies.";
         graphInfo.textContent = "";
-      } else {
-        statusMessage.textContent = "";
-        graphInfo.textContent = \`Nodes: \${graphNodes.length}, Edges: \${graphEdges.length}\`;
+        return;
       }
 
+      graphInfo.textContent = \`Nodes: \${graphNodes.length}, Edges: \${graphEdges.length}\`;
+
+      // Add new nodes
       const nodePayload = graphNodes.map((node) => ({
         id: node.id,
         label: \`\${node.label}\\n\${node.version}\`,
@@ -947,6 +1042,7 @@ export class NpmDepsGraphView {
 
       nodes.add(nodePayload);
 
+      // Add new edges
       const edgePayload = graphEdges.map((edge) => ({
         from: edge.from,
         to: edge.to,
@@ -955,8 +1051,9 @@ export class NpmDepsGraphView {
 
       edges.add(edgePayload);
 
-      if (graphNodes.length > 0) {
-        setTimeout(() => network.fit(), 50);
+      // Fit the graph to view after a brief delay to allow rendering
+      if (graphNodes.length > 0 && network) {
+        setTimeout(() => network.fit(), 100);
       }
     }
 
@@ -989,6 +1086,12 @@ export class NpmDepsGraphView {
       vscode.postMessage({
         command: "changeSelection",
         packageNames: Array.from(selectedPackages)
+      });
+    });
+
+    stopGraphBtn.addEventListener("click", () => {
+      vscode.postMessage({
+        command: "stop"
       });
     });
 
