@@ -388,11 +388,17 @@
       }
       
       selectorEl.style.display = 'block';
-      selectorEl.innerHTML = folders.map(folder => `
-        <option value="${folder.path}" ${folder.path === currentFolder ? 'selected' : ''}>
-          ${folder.name}
-        </option>
-      `).join('');
+      selectorEl.innerHTML = '';
+      
+      folders.forEach(folder => {
+        const option = document.createElement('option');
+        option.value = folder.path;
+        option.textContent = folder.name;
+        if (folder.path === currentFolder) {
+          option.selected = true;
+        }
+        selectorEl.appendChild(option);
+      });
     }
     
     function handleFolderChange(e) {

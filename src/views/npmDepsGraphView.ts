@@ -12,6 +12,7 @@ interface PackageInfo {
 interface WorkspaceSnapshot {
   projectName: string;
   packages: PackageInfo[];
+  /** The absolute path to the workspace folder containing the package.json */
   folderPath: string;
 }
 
