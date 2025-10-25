@@ -65,11 +65,16 @@ suite("DependenciesInsightsController Test Suite", () => {
   });
 
   test("getGraphData should clear cache when requested", async () => {
-    const firstResult = await controller.getGraphData(["express"], undefined, 1, 5, false);
+    // First call to populate cache
+    await controller.getGraphData(["express"], undefined, 1, 5, false);
+    
+    // Second call with clearCache=true should not error
     const secondResult = await controller.getGraphData(["express"], undefined, 1, 5, true);
     
-    // Should return different result (cache cleared)
-    assert.ok(firstResult !== secondResult || firstResult === secondResult); // Just verify it doesn't error
+    // Verify result is still valid
+    assert.ok(secondResult);
+    assert.ok(Array.isArray(secondResult.nodes));
+    assert.ok(Array.isArray(secondResult.edges));
   });
 
   test("getGraphData should respect cancellation token", async () => {
