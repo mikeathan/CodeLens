@@ -27,6 +27,23 @@
       background: var(--vscode-sideBar-background);
     }
     
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    
+    .folder-selector {
+      padding: 4px 8px;
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 2px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
     .header h1 {
       font-size: 18px;
       margin-bottom: 4px;
@@ -196,8 +213,12 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1 id="projectTitle">NPM Dependency Graph</h1>
-      <p>Select packages and click Update Graph to visualize dependencies</p>
+      <div class="header-top">
+        <h1 id="projectTitle">NPM Dependency Graph</h1>
+        <select class="folder-selector" id="folderSelector" style="display: none;">
+        </select>
+      </div>
+      <p>Select packages and click Generate Graph to visualize dependencies</p>
     </div>
     
     <div class="main">
@@ -219,7 +240,7 @@
       
       <div class="graph-container">
         <div class="graph-toolbar">
-          <button id="updateBtn">Update Graph</button>
+          <button id="updateBtn">Generate Graph</button>
           <button id="stopBtn" class="secondary" style="display: none;">Stop</button>
           <button id="refreshBtn" class="secondary">Refresh</button>
           <span style="flex: 1;"></span>
@@ -244,6 +265,8 @@
     let packages = [];
     let selectedPackages = new Set();
     let graphData = { nodes: [], edges: [] };
+    let folders = [];
+    let currentFolder = null;
     
     // Canvas state
     let canvas, ctx;
@@ -284,6 +307,9 @@
       document.getElementById('resetBtn').addEventListener('click', resetView);
       document.getElementById('fitBtn').addEventListener('click', fitToView);
       
+      // Folder selector
+      document.getElementById('folderSelector').addEventListener('change', handleFolderChange);
+      
       vscode.postMessage({ command: 'ready' });
     }
     
@@ -295,11 +321,26 @@
         case 'init':
           packages = message.packages || [];
           selectedPackages = new Set(message.selection || []);
+          folders = message.folders || [];
+          currentFolder = message.lastSelectedFolder;
+          
+          // Update UI
+          document.getElementById('projectTitle').textContent = 
+            message.projectName ? `${message.projectName} - NPM Dependencies` : 'NPM Dependency Graph';
+          renderFolderSelector();
+          renderPackageList();
+          updateSelectionSummary();
+          setStatus('Select packages and click Generate Graph');
+          break;
+          
+        case 'packagesUpdated':
+          packages = message.packages || [];
+          selectedPackages = new Set(message.selection || []);
           document.getElementById('projectTitle').textContent = 
             message.projectName ? `${message.projectName} - NPM Dependencies` : 'NPM Dependency Graph';
           renderPackageList();
           updateSelectionSummary();
-          setStatus('Select packages and click Update Graph');
+          setStatus('Select packages and click Generate Graph');
           break;
           
         case 'updateGraph':
@@ -336,6 +377,38 @@
           break;
       }
     });
+    
+    // Folder selector rendering
+    function renderFolderSelector() {
+      const selectorEl = document.getElementById('folderSelector');
+      
+      if (folders.length <= 1) {
+        selectorEl.style.display = 'none';
+        return;
+      }
+      
+      selectorEl.style.display = 'block';
+      selectorEl.innerHTML = '';
+      
+      folders.forEach(folder => {
+        const option = document.createElement('option');
+        option.value = folder.path;
+        option.textContent = folder.name;
+        if (folder.path === currentFolder) {
+          option.selected = true;
+        }
+        selectorEl.appendChild(option);
+      });
+    }
+    
+    function handleFolderChange(e) {
+      const folderPath = e.target.value;
+      currentFolder = folderPath;
+      vscode.postMessage({
+        command: 'folderSelected',
+        folderPath: folderPath
+      });
+    }
     
     // Package list rendering
     function renderPackageList() {

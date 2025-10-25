@@ -12,10 +12,18 @@ interface PackageInfo {
 interface WorkspaceSnapshot {
   projectName: string;
   packages: PackageInfo[];
+  /** The absolute path to the workspace folder containing the package.json */
+  folderPath: string;
+}
+
+interface WorkspaceFolderInfo {
+  name: string;
+  path: string;
 }
 
 const MAX_DEPTH = 2;
 const MAX_NODES = 50;
+const LAST_FOLDER_KEY = "npmDeps:lastFolder";
 
 export class NpmDepsGraphView {
   private panel: vscode.WebviewPanel | undefined;
@@ -26,12 +34,51 @@ export class NpmDepsGraphView {
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
+  private getWorkspaceFoldersWithPackageJson(): WorkspaceFolderInfo[] {
+    const folders = vscode.workspace.workspaceFolders;
+    if (!folders) {
+      return [];
+    }
+
+    return folders
+      .filter(folder => {
+        const packageJsonPath = path.join(folder.uri.fsPath, "package.json");
+        return fs.existsSync(packageJsonPath);
+      })
+      .map(folder => ({
+        name: folder.name,
+        path: folder.uri.fsPath
+      }));
+  }
+
   async show(): Promise<void> {
-    this.snapshot = await this.loadWorkspacePackages();
+    const foldersWithPackageJson = this.getWorkspaceFoldersWithPackageJson();
+    
+    if (foldersWithPackageJson.length === 0) {
+      vscode.window.showErrorMessage(
+        "No package.json found. Please open a Node.js project."
+      );
+      return;
+    }
+
+    // Get the last selected folder from globalState
+    const lastSelectedFolder = this.context.globalState.get<string>(LAST_FOLDER_KEY);
+    
+    // Determine which folder to use
+    let selectedFolder = foldersWithPackageJson[0];
+    if (lastSelectedFolder) {
+      const lastFolder = foldersWithPackageJson.find(f => f.path === lastSelectedFolder);
+      if (lastFolder) {
+        selectedFolder = lastFolder;
+      }
+    }
+
+    // Load packages for the selected folder (but don't build graph)
+    this.snapshot = await this.loadWorkspacePackages(selectedFolder.path);
     
     if (!this.snapshot || this.snapshot.packages.length === 0) {
       vscode.window.showErrorMessage(
-        "No package.json found. Please open a Node.js project."
+        "No dependencies found in package.json"
       );
       return;
     }
@@ -51,7 +98,9 @@ export class NpmDepsGraphView {
       command: "init",
       projectName: this.snapshot.projectName,
       packages: this.snapshot.packages,
-      selection: this.selection
+      selection: this.selection,
+      folders: foldersWithPackageJson,
+      lastSelectedFolder: selectedFolder.path
     });
   }
 
@@ -95,6 +144,10 @@ export class NpmDepsGraphView {
         // Webview is ready
         break;
 
+      case "folderSelected":
+        await this.handleFolderSelected(message.folderPath);
+        break;
+
       case "changeSelection":
         this.selection = message.packageNames || [];
         await this.buildGraph(false);
@@ -109,6 +162,34 @@ export class NpmDepsGraphView {
         this.cancellation?.cancel();
         break;
     }
+  }
+
+  private async handleFolderSelected(folderPath: string): Promise<void> {
+    // Persist the selected folder
+    await this.context.globalState.update(LAST_FOLDER_KEY, folderPath);
+
+    // Load packages for the selected folder
+    this.snapshot = await this.loadWorkspacePackages(folderPath);
+    
+    if (!this.snapshot || this.snapshot.packages.length === 0) {
+      vscode.window.showErrorMessage(
+        "No dependencies found in package.json"
+      );
+      return;
+    }
+
+    // Update selection: default to production dependencies
+    this.selection = this.snapshot.packages
+      .filter(p => p.type === "dependencies")
+      .map(p => p.name);
+
+    // Send updated packages to webview (but don't build graph)
+    this.sendMessage({
+      command: "packagesUpdated",
+      projectName: this.snapshot.projectName,
+      packages: this.snapshot.packages,
+      selection: this.selection
+    });
   }
 
   private async buildGraph(clearCache: boolean): Promise<void> {
@@ -187,13 +268,8 @@ export class NpmDepsGraphView {
     }
   }
 
-  private async loadWorkspacePackages(): Promise<WorkspaceSnapshot | undefined> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-      return undefined;
-    }
-
-    const packageJsonPath = path.join(workspaceFolder.uri.fsPath, "package.json");
+  private async loadWorkspacePackages(folderPath: string): Promise<WorkspaceSnapshot | undefined> {
+    const packageJsonPath = path.join(folderPath, "package.json");
     
     if (!fs.existsSync(packageJsonPath)) {
       return undefined;
@@ -226,8 +302,9 @@ export class NpmDepsGraphView {
       packages.sort((a, b) => a.name.localeCompare(b.name));
 
       return {
-        projectName: packageJson.name || path.basename(workspaceFolder.uri.fsPath),
-        packages
+        projectName: packageJson.name || path.basename(folderPath),
+        packages,
+        folderPath
       };
     } catch (error) {
       console.error("Error reading package.json:", error);
