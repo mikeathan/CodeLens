@@ -9,6 +9,13 @@
   let workspaces = [];
   let currentWorkspace = null;
 
+  // HTML escape helper to prevent XSS
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   // Initialize
   document.addEventListener('DOMContentLoaded', () => {
     setupTabs();
@@ -107,12 +114,15 @@
       return;
     }
 
-    container.innerHTML = packages.map(pkg => `
-      <label class="package-item">
-        <input type="checkbox" value="${pkg.name}" ${pkg.selected ? 'checked' : ''}>
-        <span>${pkg.name}</span>
-      </label>
-    `).join('');
+    container.innerHTML = packages.map(pkg => {
+      const escapedName = escapeHtml(pkg.name);
+      return `
+        <label class="package-item">
+          <input type="checkbox" value="${escapedName}" ${pkg.selected ? 'checked' : ''}>
+          <span>${escapedName}</span>
+        </label>
+      `;
+    }).join('');
   }
 
   function filterPackages(query) {
@@ -150,10 +160,12 @@
     Object.keys(nodesByLevel).sort().forEach(level => {
       nodesByLevel[level].forEach(node => {
         const indent = parseInt(level) * 20;
+        const escapedLabel = escapeHtml(node.label);
+        const escapedVersion = escapeHtml(node.version);
         html += `
           <div class="graph-node" style="margin-left: ${indent}px">
-            <span class="graph-node-label">${node.label}</span>
-            <span class="graph-node-version">${node.version}</span>
+            <span class="graph-node-label">${escapedLabel}</span>
+            <span class="graph-node-version">${escapedVersion}</span>
           </div>
         `;
       });
@@ -179,10 +191,11 @@
     const container = document.getElementById('unusedResults');
     
     if (!result || !result.unused || result.unused.length === 0) {
+      const checkedCount = parseInt(result?.checked || 0);
       container.innerHTML = `
         <div class="empty-state">
           <p>✓ No unused dependencies found</p>
-          <p style="font-size: 11px; margin-top: 8px;">Checked ${result?.checked || 0} dependencies</p>
+          <p style="font-size: 11px; margin-top: 8px;">Checked ${checkedCount} dependencies</p>
         </div>
       `;
       updateStatus('No unused dependencies found');
@@ -204,11 +217,13 @@
     result.unused.forEach(dep => {
       const badgeClass = dep.type === 'dependencies' ? 'badge-prod' : 'badge-dev';
       const typeLabel = dep.type === 'dependencies' ? 'prod' : 'dev';
+      const escapedName = escapeHtml(dep.name);
+      const escapedVersion = escapeHtml(dep.version);
       
       html += `
         <tr>
-          <td><strong>${dep.name}</strong></td>
-          <td>${dep.version}</td>
+          <td><strong>${escapedName}</strong></td>
+          <td>${escapedVersion}</td>
           <td><span class="badge ${badgeClass}">${typeLabel}</span></td>
         </tr>
       `;
@@ -245,9 +260,11 @@
       return;
     }
 
-    selector.innerHTML = ws.map(w => 
-      `<option value="${w.path}">${w.name}</option>`
-    ).join('');
+    selector.innerHTML = ws.map(w => {
+      const escapedPath = escapeHtml(w.path);
+      const escapedName = escapeHtml(w.name);
+      return `<option value="${escapedPath}">${escapedName}</option>`;
+    }).join('');
 
     if (ws.length > 0) {
       currentWorkspace = ws[0].path;
