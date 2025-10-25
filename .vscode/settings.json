@@ -1,0 +1,7 @@
+{
+  "css.validate": false,
+  "files.associations": {
+    "**/src/views/webview.html": "html"
+  },
+  "html.validate.styles": false
+}

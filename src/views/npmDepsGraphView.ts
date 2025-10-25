@@ -413,13 +413,20 @@ export class NpmDepsGraphView {
 
   private getWebviewContent(): string {
     const htmlPath = path.join(this.context.extensionPath, "src", "views", "webview.html");
+    const cssPath = path.join(this.context.extensionPath, "src", "views", "styles", "npmGraph.css");
+    const jsPath = path.join(this.context.extensionPath, "src", "views", "scripts", "npmGraphWebview.js");
+    
     let html = fs.readFileSync(htmlPath, "utf8");
+    const css = fs.readFileSync(cssPath, "utf8");
+    const js = fs.readFileSync(jsPath, "utf8");
 
     const nonce = this.getNonce();
     const cspSource = this.panel!.webview.cspSource;
 
     html = html.replace(/{{nonce}}/g, nonce);
     html = html.replace(/{{cspSource}}/g, cspSource);
+    html = html.replace(/{{styles}}/g, css);
+    html = html.replace(/{{script}}/g, js);
 
     return html;
   }
