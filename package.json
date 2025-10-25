@@ -14,6 +14,24 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codelens-container",
+          "title": "CodeLens",
+          "icon": "$(pulse)"
+        }
+      ]
+    },
+    "views": {
+      "codelens-container": [
+        {
+          "id": "codelens.dependenciesInsights",
+          "name": "Dependencies Insights",
+          "type": "webview"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "dotnet-coverage.generateReport",
@@ -39,6 +57,16 @@
         "command": "codelens.showNpmDepsGraph",
         "title": "Show NPM Dependency Graph",
         "category": "CodeLens"
+      },
+      {
+        "command": "codelens.dependenciesInsights.open",
+        "title": "Open Dependencies Insights",
+        "category": "CodeLens"
+      },
+      {
+        "command": "codelens.detectUnusedDependencies",
+        "title": "Detect Unused Dependencies",
+        "category": "CodeLens"
       }
     ],
     "menus": {
@@ -52,6 +80,11 @@
           "command": "dotnet-coverage.viewAssemblyInfo",
           "when": "resourceExtname == .dll || resourceExtname == .exe",
           "group": "dotnet@2"
+        },
+        {
+          "command": "codelens.dependenciesInsights.open",
+          "when": "resourceFilename == package.json",
+          "group": "npm@1"
         }
       ],
       "commandPalette": [
@@ -73,6 +106,14 @@
         },
         {
           "command": "codelens.showNpmDepsGraph",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "codelens.dependenciesInsights.open",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "codelens.detectUnusedDependencies",
           "when": "workspaceFolderCount > 0"
         }
       ]

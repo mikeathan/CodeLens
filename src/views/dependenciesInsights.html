@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'nonce-{{nonce}}';">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dependencies Insights</title>
+  <style>{{styles}}</style>
+</head>
+<body>
+  <div class="container">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="graph">Graph</button>
+      <button class="tab" data-tab="unused">Unused</button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <button id="refreshBtn" class="btn-icon" title="Refresh">↻</button>
+      <select id="workspaceSelector" class="workspace-selector">
+        <option value="">Select workspace...</option>
+      </select>
+      <button id="exportBtn" class="btn-secondary" title="Export JSON">Export</button>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar" id="statusBar">
+      <span id="statusText">Ready</span>
+      <span id="statusTime"></span>
+    </div>
+
+    <!-- Graph Tab Content -->
+    <div class="tab-content active" data-tab-content="graph">
+      <div class="graph-container">
+        <div class="graph-sidebar">
+          <h3>Select Packages</h3>
+          <input type="search" id="graphSearch" class="search-input" placeholder="Search...">
+          <div class="package-selection" id="packageList"></div>
+          <div class="graph-actions">
+            <button id="buildGraphBtn" class="btn-primary">Build Graph</button>
+          </div>
+        </div>
+        <div class="graph-display" id="graphDisplay">
+          <div class="empty-state">
+            <p>Select packages and click "Build Graph" to visualize dependencies</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unused Tab Content -->
+    <div class="tab-content" data-tab-content="unused">
+      <div class="unused-container">
+        <div class="unused-header">
+          <h3>Unused Dependencies</h3>
+          <button id="scanUnusedBtn" class="btn-primary">Scan for Unused</button>
+        </div>
+        <div class="unused-results" id="unusedResults">
+          <div class="empty-state">
+            <p>Click "Scan for Unused" to detect unused dependencies</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+      <div class="spinner"></div>
+      <p>Processing...</p>
+    </div>
+  </div>
+
+  <script nonce="{{nonce}}">{{script}}</script>
+</body>
+</html>
