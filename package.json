@@ -39,6 +39,11 @@
         "command": "codelens.showNpmDepsGraph",
         "title": "Show NPM Dependency Graph",
         "category": "CodeLens"
+      },
+      {
+        "command": "codelens.detectUnusedDependencies",
+        "title": "Detect Unused Dependencies",
+        "category": "CodeLens"
       }
     ],
     "menus": {
@@ -52,6 +57,11 @@
           "command": "dotnet-coverage.viewAssemblyInfo",
           "when": "resourceExtname == .dll || resourceExtname == .exe",
           "group": "dotnet@2"
+        },
+        {
+          "command": "codelens.detectUnusedDependencies",
+          "when": "resourceFilename == package.json",
+          "group": "npm@1"
         }
       ],
       "commandPalette": [
@@ -73,6 +83,10 @@
         },
         {
           "command": "codelens.showNpmDepsGraph",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "codelens.detectUnusedDependencies",
           "when": "workspaceFolderCount > 0"
         }
       ]
