@@ -71,3 +71,4 @@ Thumbs.db
 
 # Test files
 test-results/
+.vscode-test/*
