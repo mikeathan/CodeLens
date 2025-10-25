@@ -34,30 +34,77 @@ export class NpmDepsGraphView {
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
-  private getWorkspaceFoldersWithPackageJson(): WorkspaceFolderInfo[] {
-    const folders = vscode.workspace.workspaceFolders;
-    if (!folders) {
+  private async getAllWorkspaceFoldersRecursive(basePath: string, maxDepth: number = 3): Promise<WorkspaceFolderInfo[]> {
+    const folders: WorkspaceFolderInfo[] = [];
+    
+    const scan = async (currentPath: string, depth: number) => {
+      if (depth > maxDepth) {
+        return;
+      }
+      
+      try {
+        const packageJsonPath = path.join(currentPath, "package.json");
+        if (fs.existsSync(packageJsonPath)) {
+          const relativePath = path.relative(basePath, currentPath) || path.basename(currentPath);
+          folders.push({
+            name: relativePath,
+            path: currentPath
+          });
+        }
+        
+        // Scan subdirectories
+        const entries = await fs.promises.readdir(currentPath, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+            await scan(path.join(currentPath, entry.name), depth + 1);
+          }
+        }
+      } catch (error) {
+        // Ignore permission errors, etc.
+      }
+    };
+    
+    await scan(basePath, 0);
+    return folders;
+  }
+
+  private async getWorkspaceFoldersWithPackageJson(): Promise<WorkspaceFolderInfo[]> {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
       return [];
     }
 
-    return folders
-      .filter(folder => {
-        const packageJsonPath = path.join(folder.uri.fsPath, "package.json");
-        return fs.existsSync(packageJsonPath);
-      })
-      .map(folder => ({
-        name: folder.name,
-        path: folder.uri.fsPath
-      }));
+    const allFolders: WorkspaceFolderInfo[] = [];
+    
+    // Scan each workspace folder recursively
+    for (const folder of workspaceFolders) {
+      const foldersInWorkspace = await this.getAllWorkspaceFoldersRecursive(folder.uri.fsPath);
+      allFolders.push(...foldersInWorkspace);
+    }
+    
+    return allFolders;
   }
 
   async show(): Promise<void> {
-    const foldersWithPackageJson = this.getWorkspaceFoldersWithPackageJson();
+    // Always open the viewer, even if no package.json is found
+    if (!this.panel) {
+      this.createPanel();
+    } else {
+      this.panel.reveal(vscode.ViewColumn.One);
+    }
+
+    const foldersWithPackageJson = await this.getWorkspaceFoldersWithPackageJson();
     
     if (foldersWithPackageJson.length === 0) {
-      vscode.window.showErrorMessage(
-        "No package.json found. Please open a Node.js project."
-      );
+      // No package.json found, but still open the viewer
+      this.sendMessage({
+        command: "init",
+        projectName: "No Project",
+        packages: [],
+        selection: [],
+        folders: [],
+        lastSelectedFolder: null
+      });
       return;
     }
 
@@ -77,9 +124,15 @@ export class NpmDepsGraphView {
     this.snapshot = await this.loadWorkspacePackages(selectedFolder.path);
     
     if (!this.snapshot || this.snapshot.packages.length === 0) {
-      vscode.window.showErrorMessage(
-        "No dependencies found in package.json"
-      );
+      // No packages in selected folder, but still show the viewer
+      this.sendMessage({
+        command: "init",
+        projectName: "No Dependencies",
+        packages: [],
+        selection: [],
+        folders: foldersWithPackageJson,
+        lastSelectedFolder: selectedFolder.path
+      });
       return;
     }
 
@@ -87,12 +140,6 @@ export class NpmDepsGraphView {
     this.selection = this.snapshot.packages
       .filter(p => p.type === "dependencies")
       .map(p => p.name);
-
-    if (!this.panel) {
-      this.createPanel();
-    } else {
-      this.panel.reveal(vscode.ViewColumn.One);
-    }
 
     this.sendMessage({
       command: "init",
@@ -148,6 +195,10 @@ export class NpmDepsGraphView {
         await this.handleFolderSelected(message.folderPath);
         break;
 
+      case "browseFolders":
+        await this.handleBrowseFolders();
+        break;
+
       case "changeSelection":
         this.selection = message.packageNames || [];
         await this.buildGraph(false);
@@ -164,6 +215,48 @@ export class NpmDepsGraphView {
     }
   }
 
+  private async handleBrowseFolders(): Promise<void> {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+      vscode.window.showErrorMessage("No workspace folder is open");
+      return;
+    }
+
+    const selectedUri = await vscode.window.showOpenDialog({
+      canSelectFiles: false,
+      canSelectFolders: true,
+      canSelectMany: false,
+      openLabel: "Select Folder",
+      title: "Select folder containing package.json",
+      defaultUri: workspaceFolders[0].uri
+    });
+
+    if (!selectedUri || selectedUri.length === 0) {
+      return;
+    }
+
+    const folderPath = selectedUri[0].fsPath;
+    
+    // Check if package.json exists
+    const packageJsonPath = path.join(folderPath, "package.json");
+    if (!fs.existsSync(packageJsonPath)) {
+      vscode.window.showWarningMessage(
+        `No package.json found in ${path.basename(folderPath)}`
+      );
+      return;
+    }
+
+    await this.handleFolderSelected(folderPath);
+    
+    // Refresh the folder list to include this new folder
+    const folders = await this.getWorkspaceFoldersWithPackageJson();
+    this.sendMessage({
+      command: "updateFolders",
+      folders: folders,
+      selectedFolder: folderPath
+    });
+  }
+
   private async handleFolderSelected(folderPath: string): Promise<void> {
     // Persist the selected folder
     await this.context.globalState.update(LAST_FOLDER_KEY, folderPath);
@@ -172,9 +265,15 @@ export class NpmDepsGraphView {
     this.snapshot = await this.loadWorkspacePackages(folderPath);
     
     if (!this.snapshot || this.snapshot.packages.length === 0) {
-      vscode.window.showErrorMessage(
+      vscode.window.showWarningMessage(
         "No dependencies found in package.json"
       );
+      this.sendMessage({
+        command: "packagesUpdated",
+        projectName: path.basename(folderPath),
+        packages: [],
+        selection: []
+      });
       return;
     }
 

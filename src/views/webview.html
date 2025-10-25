@@ -34,6 +34,12 @@
       margin-bottom: 4px;
     }
     
+    .folder-selector-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
     .folder-selector {
       padding: 4px 8px;
       background: var(--vscode-input-background);
@@ -42,6 +48,21 @@
       border-radius: 2px;
       font-size: 12px;
       cursor: pointer;
+      min-width: 200px;
+    }
+    
+    .browse-btn {
+      padding: 4px 8px;
+      background: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      border-radius: 2px;
+    }
+    
+    .browse-btn:hover {
+      background: var(--vscode-button-secondaryHoverBackground);
     }
     
     .header h1 {
@@ -215,10 +236,14 @@
     <div class="header">
       <div class="header-top">
         <h1 id="projectTitle">NPM Dependency Graph</h1>
-        <select class="folder-selector" id="folderSelector" style="display: none;">
-        </select>
+        <div class="folder-selector-group">
+          <select class="folder-selector" id="folderSelector">
+            <option value="">Select a folder...</option>
+          </select>
+          <button class="browse-btn" id="browseBtn">Browse...</button>
+        </div>
       </div>
-      <p>Select packages and click Generate Graph to visualize dependencies</p>
+      <p id="headerDescription">Select a folder with package.json to begin</p>
     </div>
     
     <div class="main">
@@ -309,6 +334,7 @@
       
       // Folder selector
       document.getElementById('folderSelector').addEventListener('change', handleFolderChange);
+      document.getElementById('browseBtn').addEventListener('click', handleBrowseClick);
       
       vscode.postMessage({ command: 'ready' });
     }
@@ -330,7 +356,8 @@
           renderFolderSelector();
           renderPackageList();
           updateSelectionSummary();
-          setStatus('Select packages and click Generate Graph');
+          updateButtonStates();
+          setStatus(packages.length > 0 ? 'Select packages and click Generate Graph' : 'Select a folder to load packages');
           break;
           
         case 'packagesUpdated':
@@ -340,7 +367,8 @@
             message.projectName ? `${message.projectName} - NPM Dependencies` : 'NPM Dependency Graph';
           renderPackageList();
           updateSelectionSummary();
-          setStatus('Select packages and click Generate Graph');
+          updateButtonStates();
+          setStatus(packages.length > 0 ? 'Select packages and click Generate Graph' : 'No dependencies found in selected folder');
           break;
           
         case 'updateGraph':
@@ -375,21 +403,40 @@
         case 'showError':
           setStatus('Error: ' + (message.message || 'Unknown error'));
           break;
+          
+        case 'updateFolders':
+          folders = message.folders || [];
+          currentFolder = message.selectedFolder;
+          renderFolderSelector();
+          break;
       }
     });
     
     // Folder selector rendering
     function renderFolderSelector() {
       const selectorEl = document.getElementById('folderSelector');
+      const descriptionEl = document.getElementById('headerDescription');
       
-      if (folders.length <= 1) {
-        selectorEl.style.display = 'none';
+      selectorEl.innerHTML = '';
+      
+      if (folders.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No package.json found in workspace';
+        option.disabled = true;
+        option.selected = true;
+        selectorEl.appendChild(option);
+        descriptionEl.textContent = 'Open a workspace containing Node.js projects';
         return;
       }
       
-      selectorEl.style.display = 'block';
-      selectorEl.innerHTML = '';
+      // Add default option
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'Select a folder...';
+      selectorEl.appendChild(defaultOption);
       
+      // Add folder options
       folders.forEach(folder => {
         const option = document.createElement('option');
         option.value = folder.path;
@@ -399,14 +446,32 @@
         }
         selectorEl.appendChild(option);
       });
+      
+      // Update description based on selection
+      if (currentFolder) {
+        descriptionEl.textContent = 'Select packages and click Generate Graph to visualize dependencies';
+      } else {
+        descriptionEl.textContent = 'Select a folder to load packages';
+      }
     }
     
     function handleFolderChange(e) {
       const folderPath = e.target.value;
+      
+      if (!folderPath) {
+        return;
+      }
+      
       currentFolder = folderPath;
       vscode.postMessage({
         command: 'folderSelected',
         folderPath: folderPath
+      });
+    }
+    
+    function handleBrowseClick() {
+      vscode.postMessage({
+        command: 'browseFolders'
       });
     }
     
@@ -453,6 +518,17 @@
     function updateSelectionSummary() {
       document.getElementById('selectionSummary').textContent = 
         `${selectedPackages.size} of ${packages.length} packages selected`;
+      updateButtonStates();
+    }
+    
+    function updateButtonStates() {
+      const updateBtn = document.getElementById('updateBtn');
+      const refreshBtn = document.getElementById('refreshBtn');
+      
+      // Enable Generate Graph button only if packages are selected
+      const hasSelection = selectedPackages.size > 0 && packages.length > 0;
+      updateBtn.disabled = !hasSelection;
+      refreshBtn.disabled = !hasSelection;
     }
     
     function selectAll() {
