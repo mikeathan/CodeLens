@@ -1,0 +1,131 @@
+## 🚀 Feature: Unused Dependency Detector Service
+
+This PR introduces a comprehensive **Unused Dependency Detector** service for the CodeLens extension, following clean code practices and SOLID principles.
+
+---
+
+## 📋 What's New
+
+### ✨ Features
+- **UnusedDependencyDetectorService** - Analyzes Node.js projects to detect unused dependencies
+- **Comprehensive scanning** - Supports JavaScript (.js, .jsx, .mjs, .cjs) and TypeScript (.ts, .tsx) files
+- **Smart detection** - Identifies CommonJS `require()`, ES6 `import`, and dynamic `import()` statements
+- **Scoped package support** - Handles packages like `@types/node`, `@angular/core`
+- **Progress tracking** - Shows real-time progress notifications during analysis
+- **Detailed reports** - Displays results in output channel with VS Code notifications
+- **Context menu integration** - Right-click on package.json to run analysis
+
+### 🧪 Testing
+- **Comprehensive unit tests** - Full test coverage for all service methods
+- Tests for edge cases (invalid JSON, empty dependencies, missing files)
+- Mock file system operations
+- Error handling tests
+
+### 🎨 Clean Code Practices
+- ✅ **Single Responsibility Principle** - Service focuses solely on dependency analysis
+- ✅ **DRY** - No code duplication, reusable methods
+- ✅ **Meaningful names** - Clear variable and method names
+- ✅ **JSDoc comments** - Full documentation for public APIs
+- ✅ **Proper error handling** - Graceful error handling throughout
+- ✅ **Type safety** - Full TypeScript typing with interfaces
+
+---
+
+## 📦 Implementation Details
+
+### Files Added
+- `src/services/unusedDependencyDetectorService.ts` - Core service implementation
+- `src/test/unusedDependencyDetectorService.test.ts` - Comprehensive unit tests
+
+### Files Modified
+- `src/extension.ts` - Service registration and command integration
+- `package.json` - Command contribution and menu integration
+
+### Command Added
+- **Command**: `codelens.detectUnusedDependencies`
+- **Title**: Detect Unused Dependencies
+- **Category**: CodeLens
+- **Access**: Command palette + Right-click on package.json
+
+---
+
+## 🔍 How It Works
+
+1. **Reads** package.json to extract dependencies and devDependencies
+2. **Scans** all source files recursively (excluding node_modules, dist, build, etc.)
+3. **Extracts** import/require statements using regex patterns
+4. **Compares** declared dependencies vs. actually used dependencies
+5. **Reports** unused dependencies with detailed information
+
+---
+
+## 🧰 Usage
+
+1. Open a Node.js project with a package.json
+2. Run command: **CodeLens: Detect Unused Dependencies**
+   - Via Command Palette (Ctrl/Cmd+Shift+P)
+   - Right-click on package.json file
+3. View results in the Output panel
+
+---
+
+## ✅ Testing Instructions
+
+Run the unit tests:
+```bash
+npm run test
+```
+
+Manual testing:
+1. Open a Node.js project
+2. Run the detect command
+3. Verify unused dependencies are correctly identified
+
+---
+
+## 📸 Example Output
+
+```
+============================================================
+UNUSED DEPENDENCY ANALYSIS REPORT
+============================================================
+Project: /path/to/project
+Total Dependencies: 15
+Scanned Files: 42
+Unused Dependencies: 3
+============================================================
+
+⚠️  The following dependencies appear to be unused:
+
+Dependencies:
+  - unused-package (^1.0.0)
+
+Dev Dependencies:
+  - old-test-lib (^2.3.0)
+  - deprecated-tool (^0.5.0)
+
+============================================================
+```
+
+---
+
+## 🔗 Related
+- Follows the same architecture as CoverageService and AssemblyService
+- Integrates seamlessly with existing CodeLens features
+
+---
+
+## ✅ Checklist
+- [x] Service implementation with clean code practices
+- [x] Comprehensive unit tests
+- [x] Integration with extension.ts
+- [x] package.json command registration
+- [x] Context menu integration
+- [x] JSDoc documentation
+- [x] Error handling
+- [x] Progress notifications
+- [x] Output channel logging
+
+---
+
+Ready to merge! 🎉
