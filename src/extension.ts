@@ -6,6 +6,7 @@ import {
   AssemblyWebviewProvider,
 } from "./providers/webviewProvider";
 import { NpmDepsGraphView } from "./views/npmDepsGraphView";
+import { UnusedDependencyDetectorService } from "./services/unusedDependencyDetectorService";
 
 let outputChannel: vscode.OutputChannel;
 let coverageService: CoverageService;
@@ -13,6 +14,7 @@ let assemblyService: AssemblyService;
 let coverageWebviewProvider: CoverageWebviewProvider;
 let assemblyWebviewProvider: AssemblyWebviewProvider;
 let npmDepsGraphView: NpmDepsGraphView;
+let unusedDependencyService: UnusedDependencyDetectorService;
 
 export function activate(context: vscode.ExtensionContext) {
   outputChannel = vscode.window.createOutputChannel("CodeLens");
@@ -23,6 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
   coverageWebviewProvider = new CoverageWebviewProvider(context);
   assemblyWebviewProvider = new AssemblyWebviewProvider(context);
   npmDepsGraphView = new NpmDepsGraphView(context);
+  unusedDependencyService = new UnusedDependencyDetectorService(outputChannel);
 
   console.log("CodeLens is now active!");
 
@@ -80,6 +83,14 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  // Command: Detect Unused Dependencies
+  const detectUnusedDeps = vscode.commands.registerCommand(
+    "codelens.detectUnusedDependencies",
+    async (uri?: vscode.Uri) => {
+      await unusedDependencyService.analyzeUnusedDependencies(uri);
+    }
+  );
+
   context.subscriptions.push(
     generateCoverage,
     showCoverage,
@@ -87,6 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
     viewAssemblyInfo,
     showAssemblyInfo,
     showNpmDepsGraph,
+    detectUnusedDeps,
     outputChannel
   );
 }
