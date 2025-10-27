@@ -22,9 +22,9 @@ export class AssemblyService {
     targetUri?: vscode.Uri
   ): Promise<void> {
     const assemblyPath = await this.getAssemblyPath(targetUri);
-    if (!assemblyPath) return;
+    if (!assemblyPath) {return;}
 
-    if (!(await this.checkDotnetInstalled())) return;
+    if (!(await this.checkDotnetInstalled())) {return;}
 
     this.outputChannel.show();
     this.outputChannel.appendLine(`Analyzing assembly: ${assemblyPath}`);
@@ -72,7 +72,7 @@ export class AssemblyService {
       title: "Select .NET Assembly",
     });
 
-    if (!fileUri?.[0]) return undefined;
+    if (!fileUri?.[0]) {return undefined;}
 
     const assemblyPath = fileUri[0].fsPath;
     if (!assemblyPath.endsWith(".dll") && !assemblyPath.endsWith(".exe")) {

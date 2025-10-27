@@ -213,7 +213,7 @@ export class UnusedDependencyDetectorService {
   /**
    * Identifies which dependencies are not used in the codebase
    */
-  private identifyUnusedDependencies(
+  public identifyUnusedDependencies(
     allDependencies: Dependency[],
     usedDependencies: Set<string>
   ): Dependency[] {

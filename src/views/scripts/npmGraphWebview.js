@@ -290,7 +290,7 @@ function resizeCanvas() {
 }
 
 function layoutGraph() {
-  if (graphData.nodes.length === 0) return;
+  if (graphData.nodes.length === 0) {return;}
   
   // Simple force-directed layout calculation (pre-computed, not animated)
   const nodes = graphData.nodes;
@@ -323,7 +323,7 @@ function layoutGraph() {
     edges.forEach(edge => {
       const source = nodes.find(n => n.id === edge.from);
       const target = nodes.find(n => n.id === edge.to);
-      if (!source || !target) return;
+      if (!source || !target) {return;}
       
       const dx = target.x - source.x;
       const dy = target.y - source.y;
@@ -339,7 +339,7 @@ function layoutGraph() {
 }
 
 function renderGraph() {
-  if (!ctx) return;
+  if (!ctx) {return;}
   
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
@@ -357,7 +357,7 @@ function renderGraph() {
   graphData.edges.forEach(edge => {
     const source = graphData.nodes.find(n => n.id === edge.from);
     const target = graphData.nodes.find(n => n.id === edge.to);
-    if (!source || !target) return;
+    if (!source || !target) {return;}
     
     ctx.beginPath();
     ctx.moveTo(source.x, source.y);
@@ -421,7 +421,7 @@ function handleMouseDown(e) {
 }
 
 function handleMouseMove(e) {
-  if (!isDragging) return;
+  if (!isDragging) {return;}
   offsetX = e.clientX - dragStartX;
   offsetY = e.clientY - dragStartY;
   renderGraph();
@@ -453,7 +453,7 @@ function resetView() {
 }
 
 function fitToView() {
-  if (graphData.nodes.length === 0) return;
+  if (graphData.nodes.length === 0) {return;}
   
   let minX = Infinity, maxX = -Infinity;
   let minY = Infinity, maxY = -Infinity;
