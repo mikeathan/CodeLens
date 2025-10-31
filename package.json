@@ -2,7 +2,7 @@
   "name": "codelens",
   "displayName": "CodeLens",
   "description": "Generate and display code coverage reports for .NET projects with assembly analysis and npm dependency graph visualization",
-  "version": "0.1.3",
+  "version": "0.1.6",
   "publisher": "mikeathan",
   "icon": "icon.png",
   "engines": {
@@ -18,17 +18,26 @@
       {
         "command": "dotnet-coverage.generateReport",
         "title": "Generate Code Coverage Report",
-        "category": "CodeLens"
+        "category": "CodeLens",
+        "icon": "$(graph)"
       },
       {
         "command": "dotnet-coverage.showReport",
         "title": "Show Code Coverage Report",
-        "category": "CodeLens"
+        "category": "CodeLens",
+        "icon": "$(preview)"
       },
       {
         "command": "dotnet-coverage.runTests",
         "title": "Run Tests with Coverage",
-        "category": "CodeLens"
+        "category": "CodeLens",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "dotnet-coverage.quickCoverage",
+        "title": "Quick Coverage (Auto-detect Project)",
+        "category": "CodeLens",
+        "icon": "$(zap)"
       },
       {
         "command": "dotnet-coverage.viewAssemblyInfo",
@@ -54,14 +63,26 @@
           "group": "dotnet@1"
         },
         {
+          "command": "dotnet-coverage.runTests",
+          "when": "resourceExtname == .csproj || resourceExtname == .sln",
+          "group": "dotnet@2"
+        },
+        {
           "command": "dotnet-coverage.viewAssemblyInfo",
           "when": "resourceExtname == .dll || resourceExtname == .exe",
-          "group": "dotnet@2"
+          "group": "dotnet@3"
         },
         {
           "command": "codelens.detectUnusedDependencies",
           "when": "resourceFilename == package.json",
           "group": "npm@1"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "dotnet-coverage.quickCoverage",
+          "when": "resourceExtname == .cs || resourceExtname == .csproj || resourceExtname == .sln",
+          "group": "navigation@1"
         }
       ],
       "commandPalette": [
@@ -78,6 +99,10 @@
           "when": "workspaceFolderCount > 0"
         },
         {
+          "command": "dotnet-coverage.quickCoverage",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
           "command": "dotnet-coverage.viewAssemblyInfo",
           "when": "workspaceFolderCount > 0"
         },
@@ -90,7 +115,20 @@
           "when": "workspaceFolderCount > 0"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "dotnet-coverage.quickCoverage",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t",
+        "when": "editorLangId == csharp"
+      },
+      {
+        "command": "dotnet-coverage.showReport",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

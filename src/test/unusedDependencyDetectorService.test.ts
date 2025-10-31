@@ -1,16 +1,16 @@
 import * as assert from 'assert';
-import { UnusedDependencyDetectorService, Dependency } from '../services/unusedDependencyDetectorService';
+import { UnusedDependencyDetectorService, Dependency } from '../services/dependency';
 
 const mockOutputChannel = { appendLine: () => {}, show: () => {} } as any;
 
-describe('UnusedDependencyDetectorService', () => {
+suite('UnusedDependencyDetectorService', () => {
     let service: UnusedDependencyDetectorService;
 
-    beforeEach(() => {
+    setup(() => {
         service = new UnusedDependencyDetectorService(mockOutputChannel);
     });
 
-    it('should detect unused dependencies correctly', () => {
+    test('should detect unused dependencies correctly', () => {
         const dependencies: Dependency[] = [
             { name: 'dep1', version: '1.0.0', type: 'dependency' },
             { name: 'dep2', version: '1.0.0', type: 'dependency' },
@@ -21,7 +21,7 @@ describe('UnusedDependencyDetectorService', () => {
         assert.deepStrictEqual(result.map(d => d.name), ['dep2', 'dep3']);
     });
 
-    it('should return an empty array if all dependencies are used', () => {
+    test('should return an empty array if all dependencies are used', () => {
         const dependencies: Dependency[] = [
             { name: 'dep1', version: '1.0.0', type: 'dependency' },
             { name: 'dep2', version: '1.0.0', type: 'dependency' }
@@ -31,7 +31,7 @@ describe('UnusedDependencyDetectorService', () => {
         assert.deepStrictEqual(result, []);
     });
 
-    it('should handle no dependencies', () => {
+    test('should handle no dependencies', () => {
         const dependencies: Dependency[] = [];
         const usedDependencies = new Set<string>();
         const result = service.identifyUnusedDependencies(dependencies, usedDependencies);

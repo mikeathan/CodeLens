@@ -9,14 +9,33 @@ A VS Code extension for generating and displaying code coverage reports for .NET
 - Analyze .NET assemblies (DLLs/EXEs) with detailed information
 - Visualize npm package dependency graphs with interactive exploration
 - Support for xUnit, NUnit, and MSTest frameworks
+- Quick access via status bar, keyboard shortcuts, and context menus
 
 ## Usage
 
-### Code Coverage
+### Code Coverage - Multiple Ways to Access
 
-1. Open Command Palette (Cmd+Shift+P)
-2. Run "CodeLens: Generate Code Coverage Report"
-3. View the generated report in VS Code
+#### 1. **Quick Coverage (Recommended)** 🚀
+- **Click the status bar**: Click the "$(beaker) Coverage" button in the bottom-left status bar
+- **Keyboard shortcut**: Press `Cmd+Shift+T` (Mac) or `Ctrl+Shift+T` (Windows/Linux) while in a C# file
+- **Editor button**: Click the lightning bolt icon in the top-right when viewing .cs, .csproj, or .sln files
+- Automatically detects your project/solution and generates coverage
+- Prompts you to select if multiple solutions/projects are found
+
+#### 2. **Right-Click Context Menu**
+- Right-click any `.sln` or `.csproj` file in the Explorer
+- Select "Generate Code Coverage Report" for targeted coverage
+- Select "Run Tests with Coverage" to just run tests
+
+#### 3. **Command Palette**
+- Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
+- Run "CodeLens: Quick Coverage (Auto-detect Project)" - smart detection
+- Run "CodeLens: Generate Code Coverage Report" - full control
+- Run "CodeLens: Run Tests with Coverage" - tests only
+
+#### 4. **View Reports**
+- Use `Cmd+Shift+R` / `Ctrl+Shift+R` to quickly open the latest report
+- Or run "CodeLens: Show Code Coverage Report" from Command Palette
 
 ### Assembly Analysis
 
@@ -32,6 +51,15 @@ A VS Code extension for generating and displaying code coverage reports for .NET
 4. Select individual packages or press **Select All** to graph everything
 5. Click **Update Graph** to rebuild the visualization with your selection
 6. Explore the interactive dependency graph and click nodes to open the package page on npmjs.com
+
+## Keyboard Shortcuts
+
+| Command | Mac | Windows/Linux | Description |
+|---------|-----|---------------|-------------|
+| Quick Coverage | `Cmd+Shift+T` | `Ctrl+Shift+T` | Generate coverage report (auto-detect project) |
+| Show Report | `Cmd+Shift+R` | `Ctrl+Shift+R` | Open the latest coverage report |
+
+*Note: Quick Coverage shortcut only works when editing C# files*
 
 ## Project Architecture
 

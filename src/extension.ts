@@ -1,12 +1,12 @@
 import * as vscode from "vscode";
-import { CoverageService } from "./services/coverageService";
+import { CoverageService } from "./services/coverage";
 import { AssemblyService } from "./services/assemblyService";
 import {
   CoverageWebviewProvider,
   AssemblyWebviewProvider,
 } from "./providers/webviewProvider";
 import { NpmDepsGraphView } from "./views/npmDepsGraphView";
-import { UnusedDependencyDetectorService } from "./services/unusedDependencyDetectorService";
+import { UnusedDependencyDetectorService } from "./services/dependency";
 
 let outputChannel: vscode.OutputChannel;
 let coverageService: CoverageService;
@@ -15,6 +15,7 @@ let coverageWebviewProvider: CoverageWebviewProvider;
 let assemblyWebviewProvider: AssemblyWebviewProvider;
 let npmDepsGraphView: NpmDepsGraphView;
 let unusedDependencyService: UnusedDependencyDetectorService;
+let statusBarItem: vscode.StatusBarItem;
 
 export function activate(context: vscode.ExtensionContext) {
   outputChannel = vscode.window.createOutputChannel("CodeLens");
@@ -26,6 +27,23 @@ export function activate(context: vscode.ExtensionContext) {
   assemblyWebviewProvider = new AssemblyWebviewProvider(context);
   npmDepsGraphView = new NpmDepsGraphView(context);
   unusedDependencyService = new UnusedDependencyDetectorService(outputChannel);
+
+  // Create status bar item
+  statusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Left,
+    100
+  );
+  statusBarItem.text = "$(beaker) Coverage";
+  statusBarItem.tooltip = "Click to generate code coverage report";
+  statusBarItem.command = "dotnet-coverage.quickCoverage";
+  
+  // Show status bar item only in .NET workspaces
+  updateStatusBarVisibility();
+  
+  // Update status bar when active editor changes
+  vscode.window.onDidChangeActiveTextEditor(() => {
+    updateStatusBarVisibility();
+  });
 
   console.log("CodeLens is now active!");
 
@@ -50,6 +68,14 @@ export function activate(context: vscode.ExtensionContext) {
     "dotnet-coverage.runTests",
     async () => {
       await coverageService.runTestsWithCoverage();
+    }
+  );
+
+  // Command: Quick Coverage (auto-detect and generate)
+  const quickCoverage = vscode.commands.registerCommand(
+    "dotnet-coverage.quickCoverage",
+    async () => {
+      await coverageService.quickCoverage(context);
     }
   );
 
@@ -95,12 +121,39 @@ export function activate(context: vscode.ExtensionContext) {
     generateCoverage,
     showCoverage,
     runTestsWithCoverage,
+    quickCoverage,
     viewAssemblyInfo,
     showAssemblyInfo,
     showNpmDepsGraph,
     detectUnusedDeps,
-    outputChannel
+    outputChannel,
+    statusBarItem
   );
+}
+
+// Helper function to check if current workspace has .NET projects
+function updateStatusBarVisibility() {
+  const editor = vscode.window.activeTextEditor;
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  
+  if (!workspaceFolder) {
+    statusBarItem.hide();
+    return;
+  }
+
+  // Show if editing C# file or if workspace has .csproj/.sln files
+  if (editor?.document.languageId === "csharp") {
+    statusBarItem.show();
+  } else {
+    // Check if workspace has .NET project files
+    vscode.workspace.findFiles("**/*.{csproj,sln}", "**/node_modules/**", 1).then(files => {
+      if (files.length > 0) {
+        statusBarItem.show();
+      } else {
+        statusBarItem.hide();
+      }
+    });
+  }
 }
 
 export function deactivate() {
