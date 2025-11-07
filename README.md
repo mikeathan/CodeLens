@@ -1,98 +1,174 @@
 # CodeLens
 
-A VS Code extension for generating and displaying code coverage reports for .NET projects with assembly analysis capabilities and npm dependency graph visualization.
+[![Version](https://img.shields.io/badge/version-0.1.6-blue.svg)](https://github.com/mikeathan/CodeLens)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![VS Code](https://img.shields.io/badge/VS%20Code-1.105.0+-0078d7.svg)](https://code.visualstudio.com/)
 
-## Features
+> **Developer productivity toolkit for .NET and Node.js projects**  
+> Analyze code coverage, inspect assemblies, and visualize dependencies—all within VS Code.
 
-- Generate coverage reports from dotnet test
-- Display HTML reports in VS Code webviews
-- Analyze .NET assemblies (DLLs/EXEs) with detailed information
-- Visualize npm package dependency graphs with interactive exploration
-- Support for xUnit, NUnit, and MSTest frameworks
-- Quick access via status bar, keyboard shortcuts, and context menus
+---
 
-## Usage
+## ✨ Features at a Glance
 
-### Code Coverage - Multiple Ways to Access
+| Feature                  | Description                                                        | Quick Access   |
+| ------------------------ | ------------------------------------------------------------------ | -------------- |
+| 🎯 **Code Coverage**     | Generate and view detailed HTML coverage reports for .NET projects | `Ctrl+Shift+C` |
+| 🔍 **Assembly Analysis** | Inspect .NET assemblies with full type and method information      | `Ctrl+Shift+A` |
+| 📦 **NPM Dependencies**  | Interactive graph visualization of your Node.js dependencies       | `Ctrl+Shift+D` |
 
-#### 1. **Quick Coverage (Recommended)** 🚀
-- **Click the status bar**: Click the "$(beaker) Coverage" button in the bottom-left status bar
-- **Keyboard shortcut**: Press `Cmd+Shift+T` (Mac) or `Ctrl+Shift+T` (Windows/Linux) while in a C# file
-- **Editor button**: Click the lightning bolt icon in the top-right when viewing .cs, .csproj, or .sln files
-- Automatically detects your project/solution and generates coverage
-- Prompts you to select if multiple solutions/projects are found
+---
 
-#### 2. **Right-Click Context Menu**
-- Right-click any `.sln` or `.csproj` file in the Explorer
-- Select "Generate Code Coverage Report" for targeted coverage
-- Select "Run Tests with Coverage" to just run tests
+## 🚀 Quick Start
 
-#### 3. **Command Palette**
-- Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
-- Run "CodeLens: Quick Coverage (Auto-detect Project)" - smart detection
-- Run "CodeLens: Generate Code Coverage Report" - full control
-- Run "CodeLens: Run Tests with Coverage" - tests only
+### 1️⃣ Code Coverage for .NET Projects
 
-#### 4. **View Reports**
-- Use `Cmd+Shift+R` / `Ctrl+Shift+R` to quickly open the latest report
-- Or run "CodeLens: Show Code Coverage Report" from Command Palette
+**Generate comprehensive coverage reports with one keystroke:**
 
-### Assembly Analysis
+- **Keyboard**: `Ctrl+Shift+C` (or `Cmd+Shift+C` on macOS)
+- **Status Bar**: Click "Generate Coverage" button
+- **Command Palette**: `Ctrl+Shift+P` → "Generate Code Coverage Report"
+- **Context Menu**: Right-click `.sln` or `.csproj` file → "Generate Code Coverage Report"
 
-1. Right-click any .dll or .exe file
-2. Select "View Assembly Information"
-3. Explore assembly metadata in an interactive webview
+**Features:**
 
-### NPM Dependency Graph
+- ✅ Detailed HTML reports with line, branch, and method coverage
+- ✅ Supports xUnit, NUnit, MSTest
+- ✅ Real-time progress tracking
+- ✅ Automatic project detection
 
-1. Open Command Palette (Cmd+Shift+P)
-2. Run "CodeLens: Show NPM Dependency Graph"
-3. Use the sidebar filters to include or exclude dependency types
-4. Select individual packages or press **Select All** to graph everything
-5. Click **Update Graph** to rebuild the visualization with your selection
-6. Explore the interactive dependency graph and click nodes to open the package page on npmjs.com
+---
 
-## Keyboard Shortcuts
+### 2️⃣ Assembly Analysis
 
-| Command | Mac | Windows/Linux | Description |
-|---------|-----|---------------|-------------|
-| Quick Coverage | `Cmd+Shift+T` | `Ctrl+Shift+T` | Generate coverage report (auto-detect project) |
-| Show Report | `Cmd+Shift+R` | `Ctrl+Shift+R` | Open the latest coverage report |
 
-*Note: Quick Coverage shortcut only works when editing C# files*
+**Inspect any .NET assembly (DLL/EXE) with detailed metadata:**
 
-## Project Architecture
+- **Context Menu**: Right-click any `.dll` or `.exe` → "View Assembly Information"
+- **Keyboard**: `Ctrl+Shift+A` (or `Cmd+Shift+A` on macOS)
+- **Command Palette**: `Ctrl+Shift+P` → "Analyze .NET Assembly"
 
-The extension has been refactored into a modular architecture for better maintainability and readability:
+**What you'll see:**
+
+- 📋 Types, methods, properties, and fields
+- 🏷️ Attributes and metadata
+- 🔗 Type hierarchies and relationships
+- 📝 Complete method signatures
+
+---
+
+### 3️⃣ NPM Dependency Graph
+
+**Visualize your Node.js project dependencies interactively:**
+
+- **Keyboard**: `Ctrl+Shift+D` (or `Cmd+Shift+D` on macOS)
+- **Command Palette**: `Ctrl+Shift+P` → "Show NPM Dependency Graph"
+
+**Features:**
+
+- 🌳 Hierarchical tree visualization
+- 🔍 Search and filter packages
+- 🎨 Toggle production/development dependencies
+- 🖱️ Interactive zoom and navigation
+- ⏸️ Stop generation for large graphs
+
+---
+
+## 📋 All Commands
+
+| Command                       | Shortcut (Win/Linux) | Shortcut (macOS) | Description                     |
+| ----------------------------- | -------------------- | ---------------- | ------------------------------- |
+| Generate Code Coverage Report | `Ctrl+Shift+C`       | `Cmd+Shift+C`    | Run tests and generate coverage |
+| Show Code Coverage Report     | `Ctrl+Shift+R`       | `Cmd+Shift+R`    | View latest coverage report     |
+| Analyze .NET Assembly         | `Ctrl+Shift+A`       | `Cmd+Shift+A`    | Inspect assembly metadata       |
+| Show NPM Dependency Graph     | `Ctrl+Shift+D`       | `Cmd+Shift+D`    | Visualize npm dependencies      |
+
+---
+
+## ��️ Requirements
+
+- **For Code Coverage**:
+  - .NET SDK (6.0 or higher recommended)
+  - One of: xUnit, NUnit, or MSTest test framework
+- **For Assembly Analysis**:
+
+  - .NET SDK with reflection capabilities
+
+- **For NPM Dependencies**:
+  - Node.js project with `package.json`
+
+---
+
+## 📖 Detailed Usage
+
+### Code Coverage - Step by Step
+
+1. **Open a .NET project** in VS Code
+2. Press `Ctrl+Shift+C` to generate coverage
+3. Watch the progress in the notification
+4. View the interactive HTML report in a webview
+5. Use `Ctrl+Shift+R` to reopen the report anytime
+
+**Advanced Options:**
+
+- Right-click specific `.csproj` for targeted coverage
+- Run "Run Tests with Coverage" for test-only execution
+- Status bar shows quick access button when in .NET projects
+
+### Assembly Analysis - Step by Step
+
+1. **Locate a .NET assembly** (.dll or .exe) in your workspace
+2. Right-click the file → "View Assembly Information"
+3. Explore types, methods, and metadata in the interactive viewer
+4. Search and filter using the built-in search box
+
+### NPM Dependency Graph - Step by Step
+
+1. **Open a Node.js project** with `package.json`
+2. Press `Ctrl+Shift+D` to open the graph viewer
+3. Click "Generate Graph" to visualize dependencies
+4. Use filters to show/hide production or development deps
+5. Search for specific packages
+6. Click nodes to see details
+7. Use mouse to zoom and pan the graph
+
+---
+
+## 🏗️ Extension Architecture
+
+CodeLens is built with a modular architecture for maintainability and extensibility:
 
 ```
 src/
-├── extension.ts              # Main extension entry point with command registration
+├── extension.ts              # Main entry point
 ├── services/
-│   ├── coverageService.ts    # Coverage generation and report management
-│   └── assemblyService.ts    # Assembly analysis functionality
+│   ├── coverageService.ts    # Coverage generation logic
+│   ├── assemblyService.ts    # Assembly analysis logic
+│   └── npmDependenciesService.ts  # NPM graph logic
 ├── providers/
-│   └── webviewProvider.ts    # Webview creation and management
+│   └── webviewProvider.ts    # Webview management
+├── views/
+│   ├── coverageReportView.ts # Coverage HTML rendering
+│   ├── assemblyInfoView.ts   # Assembly viewer
+│   └── npmDepsGraphView.ts   # Dependency graph UI
 └── utils/
-    └── index.ts              # Shared utility functions
+    └── index.ts              # Shared utilities
 ```
 
-### Key Components
+**Key Design Principles:**
 
-- **CoverageService**: Handles all coverage-related operations including test execution, report generation, and ReportGenerator tool management
-- **AssemblyService**: Manages .NET assembly analysis using reflection and fallback methods
-- **WebviewProvider**: Creates and manages VS Code webview panels for displaying reports and assembly information
-- **Utilities**: Common functions for file operations, project discovery, and validation
+- 🔌 **Modular**: Each feature in its own service
+- 🧪 **Testable**: Logic separated from VS Code API
+- 📦 **Bundled**: Optimized with esbuild for fast activation
+- 🎨 **User-Friendly**: Multiple access points for every feature
 
-## Development
+---
 
-### Prerequisites
+## 🤝 Contributing
 
-- [Node.js](https://nodejs.org/) (v16 or higher)
-- [VS Code](https://code.visualstudio.com/)
-- [.NET SDK](https://dotnet.microsoft.com/download) (for testing coverage features)
+Contributions are welcome! Here's how to get started:
 
-### Setup
+### Development Setup
 
 1. Clone the repository:
 
@@ -154,6 +230,14 @@ npm run compile-tests
 npm test
 ```
 
+### Development Workflow
+
+1. Make changes to the source code
+2. Run `npm run compile` to build
+3. Press `F5` in VS Code to launch Extension Development Host
+4. Test your changes in the new VS Code window
+5. Use `Ctrl+Shift+F5` to reload the extension after changes
+
 ### Package Extension
 
 To create a `.vsix` package for distribution:
@@ -171,29 +255,6 @@ To create a `.vsix` package for distribution:
 
 This creates a `codelens-<version>.vsix` file that can be installed in VS Code.
 
-### Install Local Extension
-
-#### Method 1: Using Command Palette
-
-1. Open VS Code
-2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS)
-3. Type "Extensions: Install from VSIX"
-4. Select the generated `.vsix` file
-
-#### Method 2: Using CLI
-
-```bash
-code --install-extension codelens-<version>.vsix
-```
-
-### Development Workflow
-
-1. Make changes to the source code
-2. Run `npm run compile` to build
-3. Press `F5` in VS Code to launch Extension Development Host
-4. Test your changes in the new VS Code window
-5. Use `Ctrl+Shift+F5` to reload the extension after changes
-
 ### Available Scripts
 
 - `npm run compile` - Full build with type checking and linting
@@ -205,6 +266,25 @@ code --install-extension codelens-<version>.vsix
 - `npm run watch-tests` - Watch mode for tests
 - `npm test` - Run all tests
 
-## License
+---
 
-MIT
+## 📄 License
+
+MIT © 2024
+
+---
+
+## 🐛 Issues & Feedback
+
+Found a bug or have a feature request? Please [open an issue](https://github.com/mikeathan/CodeLens/issues) on GitHub.
+
+---
+
+## 🌟 Show Your Support
+
+If you find CodeLens helpful, please consider:
+
+- ⭐ Starring the repository
+- 📢 Sharing with your team
+- 🐛 Reporting bugs or suggesting features
+- 🤝 Contributing code improvements
