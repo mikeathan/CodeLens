@@ -1,7 +1,7 @@
 {
   "name": "codelens",
   "displayName": "CodeLens",
-  "description": "Generate and display code coverage reports for .NET projects with assembly analysis and npm dependency graph visualization",
+  "description": "Developer productivity toolkit with code coverage, assembly inspection, and dependency analysis utilities",
   "version": "0.1.6",
   "publisher": "mikeathan",
   "icon": "icon.png",
